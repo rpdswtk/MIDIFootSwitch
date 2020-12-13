@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ButtonHandler.h>
+#include "MIDIUSB.h"
 
 #define MENU_BUTTON_PIN 6
 #define BUTTON_1_PIN 7
@@ -12,11 +13,15 @@
 #define LED_2 15
 #define LED_3 4
 
+#define CONTROL_CHANGE_EVENT_TYPE 0x0B
+#define MIDI_CHANNEL 0
+
 void menuButtonPressed();
 void button1Pressed();
 void button2Pressed();
 void button3Pressed();
 void sendMidi();
+void sendControlChange(byte channel, byte value);
 
 ButtonHandler buttonHandlerMenu(MENU_BUTTON_PIN, menuButtonPressed);
 ButtonHandler buttonHandler_1(BUTTON_1_PIN, button1Pressed);
@@ -27,7 +32,7 @@ bool active_menu_led = true; // true = A, false = B
 int active_led = LED_1;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   sendMidi();
 
   pinMode(LED_A, OUTPUT);
@@ -78,37 +83,38 @@ void updateLeds() {
   }
 }
 
+
 void sendMidi() {
-  if (active_menu_led) {
-    Serial.println("MODE_A");
-  } else {
-    Serial.println("MODE_B");
+  byte offset = 0;
+  if (!active_menu_led) {
+    offset = 1;
   }
 
-  if (active_led == LED_1) {
-    Serial.println("PROFILE_1 ON");
-  } else {
-    Serial.println("PROFILE_1 OFF");
+  switch (active_led)
+  {
+    case LED_1:
+      sendControlChange(MIDI_CHANNEL, 20 + offset);
+    break;
+    case LED_2:
+      sendControlChange(MIDI_CHANNEL, 22 + offset);
+    break;
+    case LED_3:
+      sendControlChange(MIDI_CHANNEL, 24 + offset);
+    break;
   }
+}
 
-  if (active_led == LED_2) {
-    Serial.println("PROFILE_2 ON");
-  } else {
-    Serial.println("PROFILE_2 OFF");
-  }
-
-  if (active_led == LED_3) {
-    Serial.println("PROFILE_3 ON");
-  } else {
-    Serial.println("PROFILE_3 OFF");
-  }
+void sendControlChange(byte channel, byte value) {
+  midiEventPacket_t event = { CONTROL_CHANGE_EVENT_TYPE, 0xB0 | channel, value};
+  MidiUSB.sendMIDI(event);
+  MidiUSB.flush();
 }
 
 void loop() {
   updateLeds();
-
   buttonHandlerMenu.tick();
   buttonHandler_1.tick();
   buttonHandler_2.tick();
   buttonHandler_3.tick();
+  MidiUSB.flush();
 }
