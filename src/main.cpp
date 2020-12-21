@@ -7,6 +7,8 @@
 #define BUTTON_2_PIN 8
 #define BUTTON_3_PIN 9
 
+#define NUM_OF_LEDS 5
+
 #define LED_A 10
 #define LED_B 16
 #define LED_1 14
@@ -21,6 +23,7 @@ void button1Pressed();
 void button2Pressed();
 void button3Pressed();
 void sendMidi();
+void startupAnimation();
 void sendControlChange(byte channel, byte value);
 
 ButtonHandler buttonHandlerMenu(MENU_BUTTON_PIN, menuButtonPressed);
@@ -30,6 +33,8 @@ ButtonHandler buttonHandler_3(BUTTON_3_PIN, button3Pressed);
 
 bool active_menu_led = true; // true = A, false = B
 int active_led = LED_1;
+
+int ledpins[NUM_OF_LEDS] = {LED_A, LED_B, LED_1, LED_2, LED_3};
 
 void setup() {
   Serial.begin(115200);
@@ -46,6 +51,8 @@ void setup() {
   digitalWrite(LED_1, LOW);
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
+
+  startupAnimation();
 }
 
 void menuButtonPressed() {
@@ -83,6 +90,20 @@ void updateLeds() {
   }
 }
 
+void startupAnimation() {
+  for (int i=0; i<NUM_OF_LEDS; i++) {
+    delay(25);
+    digitalWrite(ledpins[i], HIGH);
+    delay(25);
+    digitalWrite(ledpins[i], LOW);
+  }
+  for (int i=NUM_OF_LEDS; i>=0; i--) {
+    delay(25);
+    digitalWrite(ledpins[i], HIGH);
+    delay(25);
+    digitalWrite(ledpins[i], LOW);
+  }
+}
 
 void sendMidi() {
   byte offset = 0;
